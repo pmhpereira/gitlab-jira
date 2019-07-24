@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GitLab - JIRA
 // @description  Minor JIRA integration into GitLab
-// @version      0.2.0
+// @version      0.2.1
 // @namespace    http://gitlab.usyuop.eu/
 // @author       bubblefoil
 // @license      MIT
@@ -30,7 +30,7 @@
 
     function getJiraIssueKeyFromTitle() {
         const match = getTitle().innerText.match(globalJiraIssueKeyRegex());
-        return match[0];
+        return match ? match[0] : '';
     }
 
     function getTargetBranchFromMR() {
@@ -64,7 +64,7 @@
         }
         getMrWidgetSection().insertAdjacentHTML('afterend',
             `<div class="mr-widget-body media" style=" white-space: nowrap;">
-                    <button id="add-jira-merge-comment-manually" class="btn btn-sm btn-success">Add JIRA comment</button>
+                    <button id="add-jira-merge-comment-manually" class="btn btn-sm btn-success" disabled="${!getJiraIssueKeyFromTitle()}">Add JIRA comment</button>
                     <input id="jira-merge-comment-input" type="text" class="form-control pad qa-issuable-form-title" value="${getJiraComment(getTargetBranchFromMR())}">
                 </div>`
         );
