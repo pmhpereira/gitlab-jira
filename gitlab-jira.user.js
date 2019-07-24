@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GitLab - JIRA
 // @description  Minor JIRA integration into GitLab
-// @version      0.1.0
+// @version      0.2.0
 // @namespace    http://gitlab.usyuop.eu/
 // @author       bubblefoil
 // @license      MIT
@@ -41,8 +41,8 @@
         return `Merged into ${targetBranch}`;
     }
 
-    function getMrWidgetChild() {
-        return document.querySelector('div.media-body-wrap.space-children');
+    function getMrWidgetSection() {
+        return document.querySelector('div.mr-widget-section');
     }
 
     /**
@@ -59,19 +59,42 @@
     }
 
     function addJiraCommentWidget() {
-        getMrWidgetChild().insertAdjacentHTML('afterend',
-            `<div class="media-body-wrap space-children">
-            <label><input id="add-jira-merge-comment" type="checkbox" class="js-remove-source-branch-checkbox">Add JIRA comment</label>
-            <button id="add-jira-merge-comment-manually" class="btn btn-sm btn-success">Manually</button>
-            </div>`
+        if (!getMrWidgetSection()) {
+            return;
+        }
+        getMrWidgetSection().insertAdjacentHTML('afterend',
+            `<div class="mr-widget-body media" style=" white-space: nowrap;">
+                    <button id="add-jira-merge-comment-manually" class="btn btn-sm btn-success">Add JIRA comment</button>
+                    <input id="jira-merge-comment-input" type="text" class="form-control pad qa-issuable-form-title" value="${getJiraComment(getTargetBranchFromMR())}">
+                </div>`
         );
+
+        const commentInput = document.getElementById('jira-merge-comment-input');
+        const jiraCommentButton = document.getElementById('add-jira-merge-comment-manually');
+        
+        jiraCommentButton.addEventListener('click', (ev) => {
+            jiraCommentButton.disabled = true;
+            commentInput.disabled = true;
+            sendJiraComment(commentInput.value)
+                .then(
+                    (response) => {
+                        console.info("Success, comment added.", response.status);
+                        commentInput.insertAdjacentHTML('afterend', `<span>✔ Comment added</span>`);
+                    },
+                    (response) => {
+                        console.error("Failed to add comment.", response.responseText);
+                        jiraCommentButton.disabled = false;
+                        commentInput.disabled = false;
+                        commentInput.insertAdjacentHTML('afterend', `<span>❌ Adding comment failed</span>`);
+                    }
+                );
+        });
     }
 
-    function sendJiraComment() {
+    function sendJiraComment(comment, success, error) {
         const key = getJiraIssueKeyFromTitle();
-        const comment = getJiraComment(getTargetBranchFromMR());
         console.debug(`Sending JIRA comment '${comment}' request on issue ${key}`, key);
-        addJiraComment({
+        return addJiraComment({
             key: key,
             comment: comment,
             onSuccess: (response) => console.info("Success, comment added.", response.status),
@@ -79,41 +102,35 @@
         });
     }
 
-    function addMergeListener() {
-        // Fixme enable Mergebutton listener
-        // getMergeButton().addEventListener('click', sendJiraComment);
-        document.querySelector('#add-jira-merge-comment-manually').addEventListener('click', sendJiraComment);
-    }
-
-
     /**
      * @param {string} comment.key JIRA issue key string.
      * @param {string} comment.comment The comment text.
-     * @param {Function} [comment.onSuccess] Callback to be invoked on response from JIRA.
-     * @param {Function} [comment.onError] Callback to be invoked in case the JIRA request fails.
      * @param {Function} [comment.onReadyStateChange] Callback to be invoked when the request state changes.
+     * @return {Promise} 
      */
     function addJiraComment(comment) {
         console.log(`Sending a comment request. Issue=${comment.key}, Comment="${comment.comment}"`);
         const body = `{ "body": "${comment.comment}" }`;
-        // noinspection JSUnresolvedFunction
-        GM_xmlhttpRequest(
-            {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json",
-                    //Disable the cross-site request check on the JIRA side
-                    "X-Atlassian-Token": "nocheck",
-                    //Previous header does not work for requests from a web browser
-                    "User-Agent": "xx"
-                },
-                data: body,
-                url: `${jiraRestApiUrlIssue}/${comment.key}/comment`,
-                onreadystatechange: comment.onReadyStateChange,
-                onload: comment.onSuccess,
-                onerror: comment.onError
-            }
-        );
+        return new Promise((resolve, reject) => {
+            // noinspection JSUnresolvedFunction
+            GM_xmlhttpRequest(
+                {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json",
+                        //Disable the cross-site request check on the JIRA side
+                        "X-Atlassian-Token": "nocheck",
+                        //Previous header does not work for requests from a web browser
+                        "User-Agent": "xx"
+                    },
+                    data: body,
+                    url: `${jiraRestApiUrlIssue}/${comment.key}/comment`,
+                    onreadystatechange: comment.onReadyStateChange,
+                    onload: resolve,
+                    onerror: reject
+                }
+            );
+        });
     }
 
     /**
@@ -122,7 +139,6 @@
     function enhanceMergeRequestPage() {
         replaceIssueByLink(getTitle());
         addJiraCommentWidget();
-        addMergeListener();
     }
 
     enhanceMergeRequestPage();
