@@ -64,14 +64,14 @@
         }
         getMrWidgetSection().insertAdjacentHTML('afterend',
             `<div class="mr-widget-body media" style=" white-space: nowrap;">
-                    <button id="add-jira-merge-comment-manually" class="btn btn-sm btn-success" disabled="${!getJiraIssueKeyFromTitle()}">Add JIRA comment</button>
+                    <button id="add-jira-merge-comment-manually" class="btn btn-sm btn-success" ${!getJiraIssueKeyFromTitle() ? 'disabled' : ''}>Add JIRA comment</button>
                     <input id="jira-merge-comment-input" type="text" class="form-control pad qa-issuable-form-title" value="${getJiraComment(getTargetBranchFromMR())}">
                 </div>`
         );
 
         const commentInput = document.getElementById('jira-merge-comment-input');
         const jiraCommentButton = document.getElementById('add-jira-merge-comment-manually');
-        
+
         jiraCommentButton.addEventListener('click', (ev) => {
             jiraCommentButton.disabled = true;
             commentInput.disabled = true;
