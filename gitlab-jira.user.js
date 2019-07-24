@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GitLab - JIRA
 // @description  Minor JIRA integration into GitLab
-// @version      0.2.1
+// @version      0.2.2
 // @namespace    http://gitlab.usyuop.eu/
 // @author       bubblefoil
 // @license      MIT
