@@ -1,20 +1,20 @@
 // ==UserScript==
 // @name         GitLab - JIRA
 // @description  Minor JIRA integration into GitLab
-// @version      0.2.2
+// @version      0.2.3
 // @namespace    http://gitlab.usyuop.eu/
 // @author       bubblefoil
 // @license      MIT
 // @match        http://gitlab.usyuop.eu:10080/*/*/merge_requests/*
 // @run-at       document-idle
 // @grant        GM_xmlhttpRequest
-// @connect      jira.unicorn.eu
+// @connect      jira.unicorn.com
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    const jiraUrl = 'https://jira.unicorn.eu';
+    const jiraUrl = 'https://jira.unicorn.com';
     const jiraBrowseIssue = jiraUrl + "/browse";
     const jiraRestApiUrl = jiraUrl + '/rest/api/2';
     const jiraRestApiUrlIssue = jiraRestApiUrl + '/issue';
